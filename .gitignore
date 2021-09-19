@@ -10,3 +10,6 @@ coverage
 yarn.lock
 /output.txt
 /package-lock.json
+/.circleci
+/.github
+/.vscode
