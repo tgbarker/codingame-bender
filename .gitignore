@@ -8,8 +8,5 @@ src/**.js
 coverage
 *.log
 yarn.lock
-/.github
-/.vscode
 /output.txt
 /package-lock.json
-/.circleci
