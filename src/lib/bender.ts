@@ -13,12 +13,12 @@ type BenderState = {
 };
 
 export class Bender {
-  currentPoint: MapCoordinates;
-  currentState: BenderState;
-  directionPriority: Array<WorldMapPointType>;
-  visited = new Map<string, Array<BenderState>>();
+  private _currentPoint: MapCoordinates;
+  private _currentState: BenderState;
+  private _directionPriority: Array<WorldMapPointType>;
+  private _visited = new Map<string, Array<BenderState>>();
 
-   static readonly defaultDirectionPriority: Array<WorldMapPointType> = [
+   static readonly DEFAULT_DIRECTION_PRIORITY: Array<WorldMapPointType> = [
     WorldMapPointType.SOUTH,
     WorldMapPointType.EAST,
     WorldMapPointType.NORTH,
@@ -27,34 +27,41 @@ export class Bender {
 
   constructor(
     startPoint: MapCoordinates,
-    directionPriority: Array<WorldMapPointType> = Bender.defaultDirectionPriority,
+    directionPriority: Array<WorldMapPointType> = Bender.DEFAULT_DIRECTION_PRIORITY,
     invertedDirection = false,
     breakerMode = false,
     currentHeading = WorldMapPointType.SOUTH
   ) {
-    this.currentPoint = startPoint;
-    this.currentState = {
+    this._currentPoint = startPoint;
+    this._currentState = {
       isInvertedDirection: invertedDirection,
       isBreakerMode: breakerMode,
       currentHeading: currentHeading,
     };
-    this.directionPriority = [...directionPriority]; // copy so can reverse
+    this._directionPriority = [...directionPriority]; // copy so can reverse
+  }
+
+  /**
+   * Getter for Bender's current state
+   */
+  get currentState() : BenderState {
+    return this._currentState;
   }
 
   /**
    * Change the direction priority as a bool member and also reverse the array order
    */
   public changeDirectionPriority() {
-    this.currentState.isInvertedDirection =
-      !this.currentState.isInvertedDirection;
-    this.directionPriority.reverse();
+    this._currentState.isInvertedDirection =
+      !this._currentState.isInvertedDirection;
+    this._directionPriority.reverse();
   }
 
   /**
    * Swap Bender's breaker mode enabling to break through X cases
    */
   public changeBreakerMode() {
-    this.currentState.isBreakerMode = !this.currentState.isBreakerMode;
+    this._currentState.isBreakerMode = !this._currentState.isBreakerMode;
   }
 
   /**
@@ -62,19 +69,19 @@ export class Bender {
    * @param worldMap The map used
    * @returns The MapCoordinates of the next cell
    */
-  public calculateNextCell(
+  private calculateNextCell(
     worldMap: WorldMap
   ): MapCoordinates {
     let nextCell: MapCoordinates = this.canMoveToSquare(
       worldMap,
-      this.currentState.currentHeading
+      this._currentState.currentHeading
     );
     // can't move to next square with current heading
     if (nextCell.x === 0 && nextCell.y === 0) {
-      for (let i = 0; i < this.directionPriority.length; i++) {
-        nextCell = this.canMoveToSquare(worldMap, this.directionPriority[i]);
+      for (let i = 0; i < this._directionPriority.length; i++) {
+        nextCell = this.canMoveToSquare(worldMap, this._directionPriority[i]);
         if (nextCell.x !== 0 && nextCell.y !== 0) {
-          this.currentState.currentHeading = this.directionPriority[i];
+          this._currentState.currentHeading = this._directionPriority[i];
           break;
         }
       }
@@ -84,34 +91,44 @@ export class Bender {
   }
 
   /**
+   * Create a string reperesentation of a coordinate for use such as a key string in a map
+   * @param coordinate The MapCoordinates type used to generate the string key
+   * @returns The coordinate as a string for map searching
+   */
+  private generateCoordinateKey(coordinate : MapCoordinates) : string {
+    return coordinate.x + '-' + coordinate.y;
+  }
+
+  /**
    * Checks the list of visited cells and state at time of passage, if duplicate, means a loop
    * @param nextCell The cell that will be checked
    * @returns A boolean stating whether the checked cell has been visited in current state or not
    */
-  public isInLoop(nextCell: MapCoordinates): boolean {
-    if (this.visited.has(nextCell.x + '-' + nextCell.y)) {
-      let visitedStatesOfCell: Array<BenderState> = this.visited.get(
-        nextCell.x + '-' + nextCell.y
+  private isInLoop(nextCell: MapCoordinates): boolean {
+    const coordinateKey = this.generateCoordinateKey(nextCell);
+    if (this._visited.has(coordinateKey)) {
+      let visitedStatesOfCell: Array<BenderState> = this._visited.get(
+        coordinateKey
       )!;
       for (let i = 0; i < visitedStatesOfCell.length; i++) {
         let stateToCheck: BenderState = visitedStatesOfCell[i];
         if (
           stateToCheck.isInvertedDirection ===
-            this.currentState.isInvertedDirection &&
-          stateToCheck.isBreakerMode === this.currentState.isBreakerMode &&
-          stateToCheck.currentHeading === this.currentState.currentHeading
+            this._currentState.isInvertedDirection &&
+          stateToCheck.isBreakerMode === this._currentState.isBreakerMode &&
+          stateToCheck.currentHeading === this._currentState.currentHeading
         ) {
           return true;
         }
       }
     } else {
-      this.visited.set(nextCell.x + '-' + nextCell.y, []);
+      this._visited.set(coordinateKey, []);
     }
 
-    this.visited.get(nextCell.x + '-' + nextCell.y)?.push({
-      isBreakerMode: this.currentState.isBreakerMode,
-      isInvertedDirection: this.currentState.isInvertedDirection,
-      currentHeading: this.currentState.currentHeading,
+    this._visited.get(coordinateKey)?.push({
+      isBreakerMode: this._currentState.isBreakerMode,
+      isInvertedDirection: this._currentState.isInvertedDirection,
+      currentHeading: this._currentState.currentHeading,
     });
 
     return false;
@@ -130,13 +147,13 @@ export class Bender {
   ): MapCoordinates {
     let nextCellPoint: MapCoordinates = this.shiftAxis(direction);
     if (
-      (this.currentState.isBreakerMode === false &&
-        (worldMap.pointsMatrix[nextCellPoint.y][nextCellPoint.x] ===
+      (this._currentState.isBreakerMode === false &&
+        (worldMap.mapMatrix[nextCellPoint.y][nextCellPoint.x] ===
           WorldMapPointType.X ||
-          worldMap.pointsMatrix[nextCellPoint.y][nextCellPoint.x] ===
+          worldMap.mapMatrix[nextCellPoint.y][nextCellPoint.x] ===
             WorldMapPointType.OBSTACLE)) ||
-      (this.currentState.isBreakerMode === true &&
-        worldMap.pointsMatrix[nextCellPoint.y][nextCellPoint.x] ===
+      (this._currentState.isBreakerMode === true &&
+        worldMap.mapMatrix[nextCellPoint.y][nextCellPoint.x] ===
           WorldMapPointType.OBSTACLE)
     ) {
       return { x: 0, y: 0 };
@@ -150,10 +167,10 @@ export class Bender {
    * @param direction The current heading to choose the x/y axis shift
    */
   private shiftAxis(direction: WorldMapPointType): MapCoordinates {
-    let pointAxisChange = WorldMap.headingMap.get(direction)!.axisShift;
+    let pointAxisChange = WorldMap.HEADING_MAP.get(direction)!.axisShift;
     return {
-      x: this.currentPoint.x + pointAxisChange.x,
-      y: this.currentPoint.y + pointAxisChange.y,
+      x: this._currentPoint.x + pointAxisChange.x,
+      y: this._currentPoint.y + pointAxisChange.y,
     };
   }
 
@@ -172,7 +189,7 @@ export class Bender {
       nextCell = this.calculateNextCell(worldMap);
       // add the direction traveled to the output array of directions
       listOfDirections.push(
-        WorldMap.headingMap.get(this.currentState.currentHeading)!.fullHeading
+        WorldMap.HEADING_MAP.get(this._currentState.currentHeading)!.fullHeading
       );
 
       let pointDataStr = worldMap.getSquareContents(nextCell);
@@ -183,21 +200,15 @@ export class Bender {
         this.changeBreakerMode();
       } else if (pointDataStr === WorldMapPointType.INVERTER) {
         this.changeDirectionPriority();
-      } else if (pointDataStr === WorldMapPointType.X && this.currentState.isBreakerMode) {
+      } else if (pointDataStr === WorldMapPointType.X && this._currentState.isBreakerMode) {
         worldMap.changeSquareContents(nextCell, WorldMapPointType.SPACE);
       } else if (pointDataStr === WorldMapPointType.TELEPORT) {
         nextCell = worldMap.moveToOtherTeleportCell(nextCell);
-      } else if (WorldMap.headingMap.has(pointDataStr)) {
-        this.currentState.currentHeading =
-        WorldMap.headingMap.get(pointDataStr)!.direction;
+      } else if (WorldMap.HEADING_MAP.has(pointDataStr)) {
+        this._currentState.currentHeading = WorldMap.HEADING_MAP.get(pointDataStr)!.direction;
       }
 
-      this.currentPoint = nextCell;
-
-      // console.log(
-      //   'Heading : %s',
-      //   mapPointTypeToStringMapping.get(this.currentState.currentHeading)
-      // );
+      this._currentPoint = nextCell;
 
       // If the suicide cabin 'S' is encountered
       if (pointDataStr === WorldMapPointType.SUICIDE) {

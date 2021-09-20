@@ -3,11 +3,11 @@ import { isSameMapCoordinate, MapCoordinates } from "./types/map_coordinates";
 import { WorldMapPointType } from "./types/map_point_type";
 
 export class WorldMap {
-  readonly pointsMatrix: Array<Array<string>>;
-  startPoint: MapCoordinates = { x: -1, y: -1 };
-  teleportPoints: Array<MapCoordinates> = [];
+  private readonly _mapMatrix: Array<Array<string>>;
+  private _startPoint: MapCoordinates = { x: -1, y: -1 };
+  private _teleportPoints: Array<MapCoordinates> = [];
 
-  static headingMap : Map<string, Heading> = new Map([
+  static readonly HEADING_MAP : Map<string, Heading> = new Map([
     [WorldMapPointType.SOUTH, {direction : WorldMapPointType.SOUTH, axisShift : { x: 0, y: 1 }, fullHeading : 'SOUTH'}],
     [WorldMapPointType.EAST, {direction : WorldMapPointType.EAST, axisShift : { x: 1, y: 0 }, fullHeading : 'EAST'}],
     [WorldMapPointType.NORTH, {direction : WorldMapPointType.NORTH, axisShift : { x: 0, y: -1 }, fullHeading : 'NORTH'}],
@@ -15,21 +15,29 @@ export class WorldMap {
   ]);
 
   constructor(pointsMap: Array<Array<string>>) {
-    this.pointsMatrix = pointsMap;
+    this._mapMatrix = pointsMap;
     this.initMap();
+  }
+
+  get startPoint() : MapCoordinates {
+    return this._startPoint;
+  }
+
+  get mapMatrix() : Array<Array<string>>{
+    return this._mapMatrix;
   }
 
   /**
    * Initialize the map with the start point and the teleport points
    */
   public initMap() {
-    for (let i = 0; i < this.pointsMatrix.length; i++) {
-      for (let j = 0; j < this.pointsMatrix[i].length; j++) {
-        if (this.pointsMatrix[i][j] == WorldMapPointType.START) {
-          this.startPoint = { x: j, y: i };
+    for (let i = 0; i < this._mapMatrix.length; i++) {
+      for (let j = 0; j < this._mapMatrix[i].length; j++) {
+        if (this._mapMatrix[i][j] == WorldMapPointType.START) {
+          this._startPoint = { x: j, y: i };
         }
-        if (this.pointsMatrix[i][j] == WorldMapPointType.TELEPORT) {
-          this.teleportPoints.push({ x: j, y: i });
+        if (this._mapMatrix[i][j] == WorldMapPointType.TELEPORT) {
+          this._teleportPoints.push({ x: j, y: i });
         }
       }
     }
@@ -41,9 +49,9 @@ export class WorldMap {
    * @returns The MapCoordinates of the other teleport cell
    */
   public moveToOtherTeleportCell(point: MapCoordinates): MapCoordinates {
-    return isSameMapCoordinate(this.teleportPoints[0], point)
-      ? this.teleportPoints[1]
-      : this.teleportPoints[0];
+    return isSameMapCoordinate(this._teleportPoints[0], point)
+      ? this._teleportPoints[1]
+      : this._teleportPoints[0];
   }
 
   /**
@@ -53,7 +61,7 @@ export class WorldMap {
    */
   public getSquareContents(point: MapCoordinates): string {
     //console.log('Get square : ' + point.x + '/' + point.y);
-    return this.pointsMatrix[point.y][point.x];
+    return this._mapMatrix[point.y][point.x];
   }
 
   /**
@@ -65,6 +73,6 @@ export class WorldMap {
     point: MapCoordinates,
     newContents: WorldMapPointType
   ) {
-    this.pointsMatrix[point.y][point.x] = newContents;
+    this._mapMatrix[point.y][point.x] = newContents;
   }
 }
