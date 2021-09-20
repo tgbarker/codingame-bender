@@ -1,11 +1,6 @@
-import {
-  directionToPointChangeMap,
-  MapCoordinates,
-  mapPointTypeToStringMapping,
-  WorldMap,
-  WorldMapPointType,
-  xtraMapPointTypeToStringMapping,
-} from './world_map';
+import { MapCoordinates } from './types/map_coordinates';
+import { WorldMapPointType } from './types/map_point_type';
+import { WorldMap } from './world_map';
 
 /**
  * A type definition to wrap the state of Bender
@@ -23,9 +18,16 @@ export class Bender {
   directionPriority: Array<WorldMapPointType>;
   visited = new Map<string, Array<BenderState>>();
 
+   static readonly defaultDirectionPriority: Array<WorldMapPointType> = [
+    WorldMapPointType.SOUTH,
+    WorldMapPointType.EAST,
+    WorldMapPointType.NORTH,
+    WorldMapPointType.WEST,
+  ];
+
   constructor(
     startPoint: MapCoordinates,
-    directionPriority: Array<WorldMapPointType>,
+    directionPriority: Array<WorldMapPointType> = Bender.defaultDirectionPriority,
     invertedDirection = false,
     breakerMode = false,
     currentHeading = WorldMapPointType.SOUTH
@@ -148,7 +150,7 @@ export class Bender {
    * @param direction The current heading to choose the x/y axis shift
    */
   private shiftAxis(direction: WorldMapPointType): MapCoordinates {
-    let pointAxisChange = directionToPointChangeMap.get(direction)!;
+    let pointAxisChange = WorldMap.headingMap.get(direction)!.axisShift;
     return {
       x: this.currentPoint.x + pointAxisChange.x,
       y: this.currentPoint.y + pointAxisChange.y,
@@ -170,7 +172,7 @@ export class Bender {
       nextCell = this.calculateNextCell(worldMap);
       // add the direction traveled to the output array of directions
       listOfDirections.push(
-        mapPointTypeToStringMapping.get(this.currentState.currentHeading)!
+        WorldMap.headingMap.get(this.currentState.currentHeading)!.fullHeading
       );
 
       let pointDataStr = worldMap.getSquareContents(nextCell);
@@ -181,16 +183,13 @@ export class Bender {
         this.changeBreakerMode();
       } else if (pointDataStr === WorldMapPointType.INVERTER) {
         this.changeDirectionPriority();
-      } else if (
-        pointDataStr === WorldMapPointType.X &&
-        this.currentState.isBreakerMode
-      ) {
+      } else if (pointDataStr === WorldMapPointType.X && this.currentState.isBreakerMode) {
         worldMap.changeSquareContents(nextCell, WorldMapPointType.SPACE);
       } else if (pointDataStr === WorldMapPointType.TELEPORT) {
         nextCell = worldMap.moveToOtherTeleportCell(nextCell);
-      } else if (mapPointTypeToStringMapping.has(pointDataStr)) {
+      } else if (WorldMap.headingMap.has(pointDataStr)) {
         this.currentState.currentHeading =
-          xtraMapPointTypeToStringMapping.get(pointDataStr)!;
+        WorldMap.headingMap.get(pointDataStr)!.direction;
       }
 
       this.currentPoint = nextCell;

@@ -1,79 +1,18 @@
-// export const WorldMapPointType = {
-//   OBSTACLE: '#',
-//   X: 'X',
-//   START: '@',
-//   SUICIDE: '$',
-//   SOUTH: 'S',
-//   EAST: 'E',
-//   NORTH: 'N',
-//   WEST: 'W',
-//   BEER: 'B',
-//   INVERTER: 'I',
-//   TELEPORT: 'T',
-//   SPACE: ' ',
-// } as const;
-export enum WorldMapPointType {
-  OBSTACLE = '#',
-  X = 'X',
-  START = '@',
-  SUICIDE = '$',
-  SOUTH = 'S',
-  EAST = 'E',
-  NORTH = 'N',
-  WEST = 'W',
-  BEER = 'B',
-  INVERTER = 'I',
-  TELEPORT = 'T',
-  SPACE = ' ',
-}
-
-export const directionPriority: Array<WorldMapPointType> = [
-  WorldMapPointType.SOUTH,
-  WorldMapPointType.EAST,
-  WorldMapPointType.NORTH,
-  WorldMapPointType.WEST,
-];
-
-export const mapPointTypeToStringMapping: Map<string, string> = new Map([
-  [WorldMapPointType.SOUTH, 'SOUTH'],
-  [WorldMapPointType.EAST, 'EAST'],
-  [WorldMapPointType.NORTH, 'NORTH'],
-  [WorldMapPointType.WEST, 'WEST'],
-]);
-
-export const xtraMapPointTypeToStringMapping: Map<string, WorldMapPointType> = new Map([
-    [ 'S', WorldMapPointType.SOUTH],
-    ['E',WorldMapPointType.EAST],
-    ['N',WorldMapPointType.NORTH,],
-    ['W',WorldMapPointType.WEST,],
-  ]);
-
-export const directionToPointChangeMap: Map<string, MapCoordinates> = new Map([
-  [WorldMapPointType.SOUTH, { x: 0, y: 1 }],
-  [WorldMapPointType.EAST, { x: 1, y: 0 }],
-  [WorldMapPointType.NORTH, { x: 0, y: -1 }],
-  [WorldMapPointType.WEST, { x: -1, y: 0 }],
-]);
-
-export type MapCoordinates = {
-  x: number;
-  y: number;
-};
-
-/**
- * Helper function to compare two MapCoordinates types
- * @param firstPoint first MapCoordinates value to compare
- * @param secondPoint second MapCoordinates value to compare
- * @returns A 'deep' compare of the two MapCoordinates value
- */
-export function isSameMapCoordinate(firstPoint : MapCoordinates, secondPoint : MapCoordinates) : boolean {
-    return firstPoint.x === secondPoint.x && firstPoint.y === secondPoint.y;
-}
+import { Heading } from "./types/heading";
+import { isSameMapCoordinate, MapCoordinates } from "./types/map_coordinates";
+import { WorldMapPointType } from "./types/map_point_type";
 
 export class WorldMap {
   readonly pointsMatrix: Array<Array<string>>;
   startPoint: MapCoordinates = { x: -1, y: -1 };
   teleportPoints: Array<MapCoordinates> = [];
+
+  static headingMap : Map<string, Heading> = new Map([
+    [WorldMapPointType.SOUTH, {direction : WorldMapPointType.SOUTH, axisShift : { x: 0, y: 1 }, fullHeading : 'SOUTH'}],
+    [WorldMapPointType.EAST, {direction : WorldMapPointType.EAST, axisShift : { x: 1, y: 0 }, fullHeading : 'EAST'}],
+    [WorldMapPointType.NORTH, {direction : WorldMapPointType.NORTH, axisShift : { x: 0, y: -1 }, fullHeading : 'NORTH'}],
+    [WorldMapPointType.WEST, {direction : WorldMapPointType.WEST, axisShift : { x: -1, y: 0 }, fullHeading : 'WEST'}],
+  ]);
 
   constructor(pointsMap: Array<Array<string>>) {
     this.pointsMatrix = pointsMap;

@@ -1,5 +1,7 @@
 import test from 'ava';
-import { isSameMapCoordinate, MapCoordinates, WorldMap, WorldMapPointType } from './world_map';
+import {  WorldMap } from './world_map';
+import { isSameMapCoordinate, MapCoordinates, } from './types/map_coordinates';
+import { WorldMapPointType } from './types/map_point_type';
 
 test('initMapSuccess', (t) => {
     const worldMap : WorldMap = new WorldMap([['', WorldMapPointType.START, WorldMapPointType.TELEPORT]]);
