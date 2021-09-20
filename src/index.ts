@@ -12,5 +12,6 @@ let listOfDirections = bender.goThroughMap(worldMap);
 
 // Output to console in required format
 for(var i = 0; i < listOfDirections.length; i++){
+  //console.log("'"+listOfDirections[i]+"',");
   console.log(listOfDirections[i]);
 }

@@ -202,6 +202,7 @@ export class Bender {
         this.changeDirectionPriority();
       } else if (pointDataStr === WorldMapPointType.X && this._currentState.isBreakerMode) {
         worldMap.changeSquareContents(nextCell, WorldMapPointType.SPACE);
+        this._visited.clear(); // when the state of the map changes, visited history should be cleared
       } else if (pointDataStr === WorldMapPointType.TELEPORT) {
         nextCell = worldMap.moveToOtherTeleportCell(nextCell);
       } else if (WorldMap.HEADING_MAP.has(pointDataStr)) {
